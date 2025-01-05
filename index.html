@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>NLP Sınavı</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            position: relative;
+        }
+        
+        .score-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .score-label {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .score-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        
+        .question {
+            margin-bottom: 20px;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        input[type="radio"] {
+            margin: 8px;
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="score-container">
+        <div class="score-label">Puan:</div>
+        <div class="score-value" id="currentScore">0</div>
+    </div>
+
+    <div style="text-align: center; margin-top: 20vh;">
+        <h1>NLP Sınavı</h1>
+    </div>
+    
+    <form id="quizForm">
+        {% for soru in sorular %}
+        <div class="question">
+            <h3>{{ soru.soru }}</h3>
+            {% if soru.tip == 'secenek' %}
+                <div>
+                    <input type="radio" name="cevap-{{ soru.id }}" value="{{ soru.cevap_a }}" required> {{ soru.cevap_a }}
+                </div>
+                <div>
+                    <input type="radio" name="cevap-{{ soru.id }}" value="{{ soru.cevap_b }}"> {{ soru.cevap_b }}
+                </div>
+                <div>
+                    <input type="radio" name="cevap-{{ soru.id }}" value="{{ soru.cevap_c }}"> {{ soru.cevap_c }}
+                </div>
+                <div>
+                    <input type="radio" name="cevap-{{ soru.id }}" value="{{ soru.cevap_d }}"> {{ soru.cevap_d }}
+                </div>
+            {% else %}
+                <input type="text" name="cevap-{{ soru.id }}" required>
+            {% endif %}
+        </div>
+        {% endfor %}
+        
+        <button type="submit">Sınavı Bitir</button>
+    </form>
+    
+    <script>
+        document.getElementById('quizForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const data = {};
+            for (let [key, value] of formData.entries()) {
+                data[key] = value;
+            }
+            
+            fetch('/cevapla', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('currentScore').textContent = data.puan;
+                alert('Cevaplarınız kaydedildi! Puanınız: ' + data.puan);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Bir hata oluştu!');
+            });
+        });
+    </script>
+    
+    <div style="position: fixed; bottom: 0; width: 100%; text-align: center; font-size: 12px; color: #666;">
+        &copy;<strong>Fatih Bayrak</strong>
+    </div>
+</body>
+</html>
