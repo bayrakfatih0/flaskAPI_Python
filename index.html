@@ -60,12 +60,19 @@
         button:hover {
             background-color: #0056b3;
         }
+
+        .button-container {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
     </style>
 </head>
 <body>
     <div class="score-container">
-        <div class="score-label">Puan:</div>
-        <div class="score-value" id="currentScore">0</div>
+        <div class="score-label">Best Score:</div>
+        <div class="score-value" id="best_score">0</div>
     </div>
 
     <div style="text-align: center; margin-top: 20vh;">
@@ -95,35 +102,74 @@
         </div>
         {% endfor %}
         
-        <button type="submit">Sınavı Bitir</button>
+        <div class="button-container">
+            <button id="submitButton" type="submit">Sınavı Bitir</button>
+            <button id="resetButton" type="button">Yeni Sınav</button>
+        </div>
     </form>
     
     <script>
-        document.getElementById('quizForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(this);
-            const data = {};
-            for (let [key, value] of formData.entries()) {
-                data[key] = value;
-            }
-            
-            fetch('/cevapla', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data)
-            })
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('currentScore').textContent = data.puan;
-                alert('Cevaplarınız kaydedildi! Puanınız: ' + data.puan);
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Bir hata oluştu!');
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('/puanlar')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('best_score').textContent = data.best_score || 0;
+                })
+                .catch(error => console.error('En iyi puan yüklenemedi:', error));
             });
+            fetch('/puanlar')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('best_score').textContent = data.best_score || 0;
+                })
+                .catch(error => console.error('En iyi puan yüklenemedi:', error));
+
+            document.getElementById('quizForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(this);
+                const data = {};
+                for (let [key, value] of formData.entries()) {
+                    data[key] = value;
+                }
+                
+                fetch('/cevapla', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    alert('Cevaplarınız kaydedildi! Puanınız: ' + data.puan);
+
+                    if (data.puan > parseInt(document.getElementById('best_score').textContent)) {
+                        document.getElementById('best_score').textContent = data.puan;
+                    }
+
+                    const inputs = document.querySelectorAll('input');
+                    inputs.forEach(input => {
+                        input.disabled = true;
+                    });
+                    
+                    document.getElementById('submitButton').disabled = true;
+                    document.getElementById('submitButton').textContent = "Sınav Tamamlandı";
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        });
+
+        document.getElementById('resetButton').addEventListener('click', function() {
+            document.getElementById('quizForm').reset();
+            const inputs = document.querySelectorAll('input');
+            inputs.forEach(input => {
+                input.disabled = false;
+            });
+
+            document.getElementById('submitButton').disabled = false;
+            document.getElementById('submitButton').textContent = "Sınavı Bitir";
         });
     </script>
     
